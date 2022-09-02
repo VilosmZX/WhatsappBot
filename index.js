@@ -1,0 +1,103 @@
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const AsciiTable = require('ascii-table');
+const table = new AsciiTable();
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient()
+
+const client = new Client({
+    authStrategy: new LocalAuth(),
+});
+
+client.on('qr', (qr) => {
+    qrcode.generate(qr, { small: true });
+});
+
+client.on('authenticated', async () => {
+    prisma.$connect()
+        .then(() => {
+            console.log('JBot is online [DATABASE ONLINE]');
+        })
+        .catch(err => {
+            console.error(err);
+        })
+});
+
+client.on('disconnected', async () => {
+    await prisma.$disconnect();
+});
+
+client.on('message_create', async (msg) => {
+    if (msg.body.startsWith('/')) {
+        const command = msg.body.substring(1).split(' ')[0];
+        const params = msg.body.split(' ').filter((param) => !param.startsWith('/'));
+        const gc = await msg.getChat();
+
+        if (!gc.isGroup) 
+            return;
+        
+        if (command === 'savecode') {
+            const code = params[0];
+            prisma.code.create({
+                data: {
+                    value: code,
+                }
+            })
+                .then(async (code) => {
+                    await gc.sendMessage(`Kode: ${code.value}\nBerhasil Ditambahkan!`);
+                })
+                .catch(async (err) => {
+                    await gc.sendMessage(`Kode ${code} sudah ada di dalam database!`);
+                });
+
+        } else if(command === 'codes') {
+            const allCodes = await prisma.code.findMany();
+            table.clearRows();
+            table.setHeading('ID', 'Code');
+
+            if (!allCodes.length)
+                return await gc.sendMessage('| Belum ada Code |');
+
+            allCodes.forEach((code) => {
+                table.addRow(code.id, code.value);   
+            });
+            await gc.sendMessage(table.toString());
+        } else if(command === 'clearcodes') {
+            const { count } = await prisma.code.deleteMany({});
+            await gc.sendMessage(`${count} code telah di hapus dari database!`);
+        } else if(command === 'remove') {
+            const id = parseInt(params[0]);
+            if (!id) 
+                return await gc.sendMessage('Masukan ID dari code!');
+            prisma.code.delete({ where: { id } })
+                .then(async (code) => {
+                    await gc.sendMessage(`Kode: ${code.value}\nID: ${code.id}\nBerhasil dihapus!`);
+                })
+                .catch(async (err) => {
+                    await gc.sendMessage(`Kode dengan ID ${id} tidak ditemukan!`)
+                })
+        } else if(command === 'update') {
+            const id = parseInt(params[0]);
+            const newCode = params[1];
+            const oldCode = (await prisma.code.findUnique({ where: { id } })).value;
+
+            prisma.code.update({
+                where: {
+                    id
+                },
+                data: {
+                    value: newCode,
+                }
+            })
+                .then(async (code) => {
+                    await gc.sendMessage(`[${oldCode}] => [${code.value}]`);
+                })  
+                .catch(async (err) => {
+                    await gc.sendMessage(`[${oldCode}] => [${oldCode}]`);
+                });
+        }
+    }
+});
+
+client.initialize();
+

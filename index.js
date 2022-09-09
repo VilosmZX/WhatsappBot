@@ -38,6 +38,7 @@ client.on('message_create', async (msg) => {
         msg: msg.body,
         chat: (await msg.getChat()).name
     };
+    await prisma.chatLog.create({ data: { value: `(${data?.chat}) From ${data.author?.number} AKA ${data.author?.name}: ${data.msg}` } });
     io.sockets.emit('new_msg', data);
     if (msg.body.startsWith('/')) {
         const command = msg.body.substring(1).split(' ')[0];
@@ -117,4 +118,3 @@ client.on('message_create', async (msg) => {
 });
 
 client.initialize();
-

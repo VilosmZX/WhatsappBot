@@ -8,7 +8,7 @@ const handleSocket = (io = new Server()) => {
         console.log(`Connected ${socket.id}`);
         socket.on('disconnect', () => {
             console.log(`Disconnected ${socket.id}`);
-        })
+        });
 
         socket.on('start', async () => {
             console.log('Start Triggered!');
@@ -17,7 +17,12 @@ const handleSocket = (io = new Server()) => {
                     socket.emit('load_msg', chats);
                 })
                 .catch(err => console.error(err));
-        })
+        });
+
+        socket.on('clear_msg', async () => {
+            await prisma.chatLog.deleteMany();
+            socket.emit('clear_msg_done');
+        });
     });
 }
 

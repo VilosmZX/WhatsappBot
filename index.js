@@ -1,9 +1,10 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const AsciiTable = require('ascii-table');
 const table = new AsciiTable();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
+const { startWeb, io } = require('./web');
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -16,23 +17,32 @@ client.on('qr', (qr) => {
 client.on('authenticated', async () => {
     prisma.$connect()
         .then(() => {
-            console.log('JBot is online [DATABASE ONLINE]');
+            console.log('Bot is online [DATABASE ONLINE]');
         })
         .catch(err => {
             console.error(err);
         })
 });
 
+client.on('ready', async () => {
+    await startWeb(client);
+})
+
 client.on('disconnected', async () => {
     await prisma.$disconnect();
 });
 
 client.on('message_create', async (msg) => {
+    const data = {
+        author: (await msg.getContact()),
+        msg: msg.body,
+        chat: (await msg.getChat()).name
+    };
+    io.sockets.emit('new_msg', data);
     if (msg.body.startsWith('/')) {
         const command = msg.body.substring(1).split(' ')[0];
         const params = msg.body.split(' ').filter((param) => !param.startsWith('/'));
         const gc = await msg.getChat();
-
         if (!gc.isGroup) 
             return;
         
@@ -95,7 +105,14 @@ client.on('message_create', async (msg) => {
                 .catch(async (err) => {
                     await gc.sendMessage(`[${oldCode}] => [${oldCode}]`);
                 });
-        }
+        } else if(command === 'sticker') {
+            if (!msg.hasMedia) 
+                return await gc.sendMessage('Kirim foto!');
+                    
+            const media = await msg.downloadMedia();
+            const author = (await msg.getContact()).name;
+            await gc.sendMessage(media, { sendMediaAsSticker: true, stickerAuthor: author});
+        } 
     }
 });
 

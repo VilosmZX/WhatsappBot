@@ -1,4 +1,5 @@
 .chatlog__container {
     display: flex;
     flex-direction: column;
+    max-height: 80vh;
 }

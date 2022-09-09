@@ -12,16 +12,7 @@
         
     </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-
-        socket.on('new_msg', (data) => {
-            console.log('DONE');
-            const div = document.querySelector('div');
-            const span = document.createElement('span');
-            span.innerText = `(${data?.chat}) From ${data.author?.number} AKA ${data.author?.name}: ${data.msg}`;
-            div.appendChild(span);
-        });
+    <script src="scripts/client.js">
     </script>
 </body>
 </html>

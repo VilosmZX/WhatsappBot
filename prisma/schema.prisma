@@ -11,11 +11,14 @@ datasource db {
 }
 
 model Code {
-  id Int @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   value String @unique
 }
 
 model ChatLog {
   id Int @id @default(autoincrement())
-  value String 
+  number String
+  name   String?
+  msg String
+  group String
 }

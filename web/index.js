@@ -12,9 +12,8 @@ const startWeb = async (client) => {
     app.set('view engine', 'ejs');
     app.use(express.static('public'));
     
-
     handleSocket(io);
-
+    
     app.get('/', async (req, res) => {
         const context = {
             chats: (await client.getChats()).filter((chat) => chat.isGroup)

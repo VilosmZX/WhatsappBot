@@ -5,6 +5,8 @@ const table = new AsciiTable();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
 const { startWeb, io } = require('./web');
+const { gethtml } = require('./api');
+const fs = require('fs/promises');
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -124,7 +126,15 @@ client.on('message_create', async (msg) => {
             const media = await msg.downloadMedia();
             const author = (await msg.getContact()).name;
             await gc.sendMessage(media, { sendMediaAsSticker: true, stickerAuthor: author});
-        } 
+        } else if(command === 'gethtml') {
+            const url = params[0];
+            if (!url)
+                return await gc.sendMessage('Masukan link website!');
+            if (!url.startsWith('https') || !url.startsWith('http')) 
+                return await gc.sendMessage(`Invalid url ${url}`);
+            const data = await gethtml(url);
+            await gc.sendMessage(data);
+        }
     }
 });
 

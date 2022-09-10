@@ -1,4 +1,4 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Buttons } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const AsciiTable = require('ascii-table');
 const table = new AsciiTable();
@@ -33,17 +33,28 @@ client.on('disconnected', async () => {
 });
 
 client.on('message_create', async (msg) => {
-    const data = {
-        author: (await msg.getContact()),
-        msg: msg.body,
-        chat: (await msg.getChat()).name
-    };
-    await prisma.chatLog.create({ data: { value: `(${data?.chat}) From ${data.author?.number} AKA ${data.author?.name}: ${data.msg}` } });
-    io.sockets.emit('new_msg', data);
+    const gc = await msg.getChat();
+    
+    if (gc.isGroup) {
+        const data = {
+            author: (await msg.getContact()),
+            msg: msg.body,
+            chat: (await msg.getChat()).name
+        };
+        await prisma.chatLog.create({
+            data: {
+                name: data.author?.pushname,
+                msg: data.msg,
+                number: data.author?.number,
+                group: data.chat,
+            }
+        });
+        io.sockets.emit('new_msg', data);
+    }
+
     if (msg.body.startsWith('/')) {
         const command = msg.body.substring(1).split(' ')[0];
         const params = msg.body.split(' ').filter((param) => !param.startsWith('/'));
-        const gc = await msg.getChat();
         if (!gc.isGroup) 
             return;
         
@@ -116,5 +127,6 @@ client.on('message_create', async (msg) => {
         } 
     }
 });
+
 
 client.initialize();

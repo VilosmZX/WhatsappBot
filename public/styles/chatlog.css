@@ -18,10 +18,19 @@ span {
     box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
 }
 
-button {
+body {
+    padding: 0;
+    margin: 0;
+    background: #EEE;
+}
+
+.button__container {
     position: absolute;
     bottom: 0;
     right: 2.5rem;
+}
+
+.button {
     border: none;
     outline: none;
     background: #FFF;
@@ -32,7 +41,7 @@ button {
     transition: 0.3s ease;
 }
 
-button:hover {
+.button:hover {
     border: rgb(111, 199, 231) 1px solid;
     transition: 0.3 ease;
 }

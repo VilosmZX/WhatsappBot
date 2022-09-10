@@ -12,10 +12,30 @@
     overflow-x: hidden;
 }
 
-span {
+.msg {
     background: #EEE;
     padding: 1rem;
     box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.info__container {
+    position: absolute;
+    top: 10%;
+    right: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.info {
+    background: #FFF;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hideInfo {
+    display: none;
 }
 
 body {
